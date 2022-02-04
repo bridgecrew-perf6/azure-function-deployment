@@ -1,6 +1,8 @@
 # TestHttpTriggerFunction
 This is a http trigger azure function with no additional functionality implemented.
 
+There is no trigger or output binding implemented to connect to other Azure services
+
 ## Objective
 Main purpose for creating this project is for me to test out the following on Azure:
 ```
