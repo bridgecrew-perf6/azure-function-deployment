@@ -1,0 +1,83 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: HttpTestTriggerFunctionVariableGroup
+  - name: projectPath
+    value: '**/TestHttpTriggerFunction.csproj'
+  - name: buildConfiguration
+    value: 'Release'
+  - name: projectName
+    value: 'TestHttpTriggerFunction'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        steps:
+          - template: build.yml
+            parameters:
+              buildConfiguration: '$(buildConfiguration)'
+              projectPath: '$(projectPath)'
+      
+      - job: Publish
+        dependsOn: Build
+        condition: succeeded()
+        steps:
+          - task: UseDotNet@2
+            displayName: Set SDK version
+            inputs:
+              packageType: sdk
+              version: 6.0.101
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+              
+          - task: DotNetCoreCLI@2
+            displayName: Publish project
+            inputs:
+              command: 'publish'
+              projects: '$(projectPath)'
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/testhttptriggerfunction'
+              publishWebProjects: false
+              zipAfterPublish: true
+
+          - publish: '$(Build.ArtifactStagingDirectory)/testhttptriggerfunction.zip'
+            displayName: 'Publish Artifact'
+            artifact: drop
+      
+      - job: Deploy
+        dependsOn: Publish
+        condition: succeeded()
+        steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureFunctionApp@1
+            displayName: Deploy to Azure
+            inputs:
+              azureSubscription: '<insert subscription here>'
+              appType: 'functionAppLinux'
+              appName: 'testhttptriggerfunctioncyy'
+              package: '$(Pipeline.Workspace)/drop/testhttptriggerfunction.zip'
+
+          - task: AzureAppServiceSettings@1
+            displayName: Update function app settings
+            inputs:
+              azureSubscription: '<insert subscription here>'
+              appName: 'testhttptriggerfunctioncyy'
+              resourceGroupName: 'TestResourceGroupA'
+              appSettings: |
+                [
+                  {
+                    "name": "TestingConnectiongString",
+                    "value": "$(TestingConnectionString)",
+                    "slotSetting": false
+                  }
+                ]

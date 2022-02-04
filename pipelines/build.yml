@@ -1,0 +1,26 @@
+parameters:
+  - name: buildConfiguration
+    default: 'Release'
+  - name: projectPath
+    default: '**/TestHttpTriggerFunction.csproj'
+
+steps:
+  - task: UseDotNet@2
+    displayName: Set SDK version
+    inputs:
+      packageType: sdk
+      version: 6.0.101
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore dependencies
+    inputs:
+      command: 'restore'
+      projects: '${{ parameters.projectPath }}'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build project
+    inputs:
+      command: 'build'
+      projects: '${{ parameters.projectPath }}'
+      arguments: '--configuration ${{ parameters.buildConfiguration }} --no-restore'
