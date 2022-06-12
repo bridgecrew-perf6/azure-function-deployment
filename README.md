@@ -1,5 +1,5 @@
-# TestHttpTriggerFunction
-This is a http trigger azure function with no additional functionality implemented.
+# Deploy Azure Function
+An azure function is deployed through azure pipelines.
 
 There is no trigger or output binding implemented to connect to other Azure services
 
